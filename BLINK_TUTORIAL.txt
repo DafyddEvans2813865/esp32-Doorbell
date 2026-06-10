@@ -1,0 +1,60 @@
+Simple Blinking LED — PlatformIO
+
+Goal
+- Show how to build and upload a simple LED blink example using PlatformIO.
+
+Prerequisites
+- Install PlatformIO (VS Code extension) or PlatformIO Core (CLI).
+- Connect your board via USB and know which board ID is set in platformio.ini.
+
+1) Check your board configuration
+- Open platformio.ini and confirm the "board" setting matches your hardware (example: board = esp32dev or board = uno).
+
+2) Decide which LED to use
+- Onboard LED: many boards define LED_BUILTIN. Check your board docs if unsure.
+- External LED: wire the LED anode to a GPIO pin through a 220-330Ω resistor, and the cathode to GND.
+
+Wiring (external LED)
+- Connect resistor to the chosen GPIO pin.
+- Connect resistor other end to LED anode (long leg).
+- Connect LED cathode (short leg) to the board GND.
+
+3) Example code (Arduino framework)
+Copy this into src/main.cpp (replace existing content):
+
+#include <Arduino.h>
+
+const int LED_PIN = LED_BUILTIN; // or change to a GPIO number (e.g. 2)
+
+void setup() {
+  pinMode(LED_PIN, OUTPUT);
+}
+
+void loop() {
+  digitalWrite(LED_PIN, HIGH);
+  delay(500);
+  digitalWrite(LED_PIN, LOW);
+  delay(500);
+}
+
+Notes
+- If LED_BUILTIN doesn't work, replace LED_BUILTIN with the correct pin number for your board.
+- For ESP32/ESP8266 boards the onboard LED is commonly on GPIO 2 or 5, but check your board reference.
+
+4) Build and upload
+- Using VS Code PlatformIO: click the PlatformIO build and upload buttons in the status bar.
+- Using CLI from project folder:
+
+pio run --target upload
+
+- To open the serial monitor (if needed):
+
+pio device monitor
+
+5) Troubleshooting
+- Build errors: ensure the correct "platform" and "board" in platformio.ini.
+- Upload errors: check the USB cable, port, and that the board is in the correct upload mode.
+- LED doesn't blink: verify wiring and try a different GPIO for external LEDs.
+
+Next steps
+- I can update src/main.cpp in this project with the example code and attempt a build. Want me to do that now?
