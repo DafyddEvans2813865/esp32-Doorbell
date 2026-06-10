@@ -6,6 +6,7 @@ uint16_t sensor_pid = 0;
 
 bool cam_ok = false;
 bool psram_ok = false;
+const char *serverUrl = "http://192.168.0.23:5080/upload";
 
 bool initCamera()
 {
@@ -34,11 +35,11 @@ bool initCamera()
     config.pin_reset = RESET_GPIO_NUM;
     config.xclk_freq_hz = 20000000;
     config.pixel_format = PIXFORMAT_JPEG;
-    config.frame_size = FRAMESIZE_QVGA;
+    config.frame_size = FRAMESIZE_VGA; // FRAMESIZE_XGA; - will move to once sd card
     config.jpeg_quality = 12;
-    config.fb_count = 1;
-    config.fb_location = psram_ok ? CAMERA_FB_IN_PSRAM : CAMERA_FB_IN_DRAM;
-    config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
+    config.fb_count = 2;
+    config.fb_location = CAMERA_FB_IN_PSRAM;
+    config.grab_mode = CAMERA_GRAB_LATEST;
     config.sccb_i2c_port = 0;
 
     cam_init_err = esp_camera_init(&config);
@@ -73,15 +74,38 @@ bool doesCameraWork()
     return true;
 }
 
-camera_fb_t *getFrame()
+void sendCameraFrame()
 {
     camera_fb_t *fb = esp_camera_fb_get();
-
-    if (!fb)
+    if (!fb || fb->len == 0 || fb->len > 250000)
     {
-        Serial.printf("capture failed pinmap=%s pid=0x%04x\n", active_pinmap, sensor_pid);
-        delay(2000);
-        return nullptr;
+        if (fb)
+            esp_camera_fb_return(fb); // free frame if too large
+        return;
     }
-    return fb;
+
+    // release buffer
+    esp_camera_fb_return(fb);
+
+    uint8_t *buf = fb->buf;
+    size_t len = fb->len;
+
+    HTTPClient http;
+    http.begin(serverUrl);
+    http.addHeader("Content-Type", "image/jpeg");
+    http.setTimeout(10000); // might remove
+
+    int responseCode = http.POST(buf, len);
+
+    if (responseCode > 0)
+    {
+        Serial.printf("Upload success: %d\n", responseCode);
+    }
+    else
+    {
+        Serial.printf("Upload failed: %s\n", http.errorToString(responseCode).c_str());
+    }
+
+    http.end();
+    return;
 }

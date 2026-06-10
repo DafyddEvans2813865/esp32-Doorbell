@@ -1,5 +1,7 @@
 #pragma once
 #include <Arduino.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
 #include "esp_camera.h"
 
 #define PWDN_GPIO_NUM -1
@@ -21,5 +23,4 @@
 
 bool initCamera();
 bool doesCameraWork();
-camera_fb_t *getFrame();
-void returnFrame(camera_fb_t *fb);
+void sendCameraFrame();
